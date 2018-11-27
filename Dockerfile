@@ -1,8 +1,7 @@
 # Pull base image.
-FROM node:8
-MAINTAINER navarroaxel <navarroaxel@gmail.com>
+FROM node:10
 
-LABEL Description="Node LTS with yarn and react-native"
+LABEL Description="Node LTS with react-native for Android"
 
 # ——————————
 # Installs i386 architecture required for running 32 bit Android tools
@@ -10,58 +9,41 @@ LABEL Description="Node LTS with yarn and react-native"
 # ——————————
 RUN dpkg --add-architecture i386 && \
     apt-get update && \
-    apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 && \
-    software-properties-common \
-    python-software-properties \
-    unzip && \
+    apt-get install -y libc6:i386 libncurses5:i386 libstdc++6:i386 lib32z1 \
+    openjdk-8-jdk unzip && \
     apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/* && \
-    apt-get clean
-
-# ——————————
-# Install Java.
-# ——————————
-
-RUN echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | debconf-set-selections && \
-  echo "deb http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee /etc/apt/sources.list.d/webupd8team-java.list & \
-  echo "deb-src http://ppa.launchpad.net/webupd8team/java/ubuntu xenial main" | tee -a /etc/apt/sources.list.d/webupd8team-java.list & \
-  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys EEA14886 & \
-  apt-get update && \
-  apt-get install -y oracle-java8-installer && \
-  rm -rf /var/lib/apt/lists/* && \
-  rm -rf /var/cache/oracle-jdk8-installer
-
-# Define commonly used JAVA_HOME variable
-ENV JAVA_HOME /usr/lib/jvm/java-8-oracle
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # ——————————
 # Installs Android SDK
 # ——————————
 
-ENV ANDROID_SDK_VERSION r24.4.1
-ENV ANDROID_BUILD_TOOLS_VERSION build-tools-23.0.1,build-tools-26.0.1
-
-ENV ANDROID_SDK_FILENAME android-sdk_${ANDROID_SDK_VERSION}-linux.tgz
-ENV ANDROID_SDK_URL http://dl.google.com/android/${ANDROID_SDK_FILENAME}
-ENV ANDROID_API_LEVELS android-23,android-26
-ENV ANDROID_EXTRA_COMPONENTS extra-android-m2repository,extra-google-m2repository,extra-android-support,extra-google-google_play_services
 ENV ANDROID_HOME /opt/android-sdk-linux
-ENV PATH ${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
-RUN cd /opt && \
-    wget -q ${ANDROID_SDK_URL} && \
-    tar -xzf ${ANDROID_SDK_FILENAME} && \
-    rm ${ANDROID_SDK_FILENAME} && \
-    echo y | android update sdk --no-ui -a --filter tools,platform-tools,${ANDROID_API_LEVELS},${ANDROID_BUILD_TOOLS_VERSION} && \
-    echo y | android update sdk --no-ui -a --filter ${ANDROID_API_LEVELS},${ANDROID_BUILD_TOOLS_VERSION} && \
-    echo y | android update sdk --no-ui --all --filter "${ANDROID_EXTRA_COMPONENTS}"
+ENV PATH ${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
+RUN cd /opt && \
+    wget --output-document=android-sdk.zip --quiet https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip && \
+    unzip android-sdk.zip -d android-sdk-linux && \
+    rm android-sdk.zip && \
+    mkdir -p "$ANDROID_HOME/licenses" && \
+    echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" && \
+    echo -e "\n2f0d1357ae7b730389d07594f0e9b502cc6fe51f" > "$ANDROID_HOME/licenses/android-googletv-license" && \
+    echo -e "\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$ANDROID_HOME/licenses/google-gdk-license" && \
+    echo -e "\ne0c19d95f989716a8960e651953886c9fc1f8c0a" > "$ANDROID_HOME/licenses/mips-android-sysimage-license" && \
+    sdkmanager --verbose tools platform-tools \
+        "platforms;android-23" "platforms;android-26" \
+        "build-tools;23.0.1" "build-tools;26.0.1" \
+        "extras;android;m2repository" "extras;google;m2repository" \
+        #"extras;google;google_play_services" \
+        "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
 
 # ——————————
 # Installs Gradle
 # ——————————
 
 # Gradle
-#ENV GRADLE_VERSION 2.4
+#ENV GRADLE_VERSION 2.14.1
 #
 #RUN cd /usr/lib \
 # && curl -fl https://downloads.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle-bin.zip \
@@ -76,12 +58,13 @@ RUN cd /opt && \
 # ——————————
 # Install React-Native package
 # ——————————
-#RUN npm install react-native-cli --global
+RUN npm install --global react-native-cli && npm cache clean --force
 
 ENV LANG en_US.UTF-8
 
 # ——————————
 # Install udev rules for most android devices
 # ——————————
-RUN mkdir -p /etc/udev/rules.d/ && cd /etc/udev/rules.d/ && \
-    wget https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
+#RUN mkdir -p /etc/udev/rules.d/ && \
+#    cd /etc/udev/rules.d/ && \
+#    wget https://raw.githubusercontent.com/M0Rf30/android-udev-rules/master/51-android.rules
