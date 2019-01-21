@@ -19,31 +19,33 @@ RUN dpkg --add-architecture i386 && \
 # Installs Android SDK
 # ——————————
 
-ENV ANDROID_HOME /opt/android-sdk-linux
+ENV ANDROID_HOME /opt/android-sdk
 ENV PATH ${PATH}:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
 RUN cd /opt && \
     wget --output-document=android-sdk.zip --quiet https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip && \
-    unzip android-sdk.zip -d android-sdk-linux && \
+    unzip android-sdk.zip -d android-sdk && \
     rm android-sdk.zip && \
     mkdir -p "$ANDROID_HOME/licenses" && \
-    echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e" > "$ANDROID_HOME/licenses/android-sdk-license" && \
-    echo -e "\n2f0d1357ae7b730389d07594f0e9b502cc6fe51f" > "$ANDROID_HOME/licenses/android-googletv-license" && \
+    echo -e "\nd56f5187479451eabf01fb78af6dfcb131a6481e\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$ANDROID_HOME/licenses/android-sdk-license" && \
+    echo -e "\n601085b94cd77f0b54ff86406957099ebe79c4d6" > "$ANDROID_HOME/licenses/android-googletv-license" && \
     echo -e "\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$ANDROID_HOME/licenses/google-gdk-license" && \
-    echo -e "\ne0c19d95f989716a8960e651953886c9fc1f8c0a" > "$ANDROID_HOME/licenses/mips-android-sysimage-license" && \
+    echo -e "\ne9acab5b5fbb560a72cfaecce8946896ff6aab9d" > "$ANDROID_HOME/licenses/mips-android-sysimage-license" && \
     sdkmanager --verbose tools platform-tools \
-        "platforms;android-23" "platforms;android-26" \
-        "build-tools;23.0.1" "build-tools;26.0.1" \
-        "extras;android;m2repository" "extras;google;m2repository" \
-        #"extras;google;google_play_services" \
+        "platforms;android-27" \
+        "build-tools;27.0.3" \
+        "extras;android;m2repository" "extras;google;m2repository" \        
         "extras;m2repository;com;android;support;constraint;constraint-layout-solver;1.0.2"
+        #"platforms;android-23" "platforms;android-26" \
+        #"build-tools;23.0.1" "build-tools;26.0.1" \
+        #"extras;google;google_play_services" \
 
 # ——————————
 # Installs Gradle
 # ——————————
 
 # Gradle
-#ENV GRADLE_VERSION 2.14.1
+#ENV GRADLE_VERSION 4.4
 #
 #RUN cd /usr/lib \
 # && curl -fl https://downloads.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle-bin.zip \
@@ -52,8 +54,8 @@ RUN cd /opt && \
 # && rm "gradle-bin.zip"
 #
 ## Set Appropriate Environmental Variables
-#ENV GRADLE_HOME /usr/lib/gradle
-#ENV PATH $PATH:$GRADLE_HOME/bin
+ENV GRADLE_HOME /usr/lib/gradle
+ENV PATH $PATH:$GRADLE_HOME/bin
 
 # ——————————
 # Install React-Native package
